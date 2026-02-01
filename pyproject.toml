@@ -1,0 +1,143 @@
+[project]
+name = "default-cicd-public"
+version = "0.1.0"
+description = "CLI tool to distribute CI/CD templates to projects"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Build Tools",
+    "Typing :: Typed",
+]
+keywords = ["ci", "cd", "github-actions", "templates", "distribution"]
+dependencies = ["rich-click>=1.9.7"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "ruff>=0.9",
+    "pyright>=1.1",
+    "bandit>=1.8",
+    "pip-audit>=2.8",
+    "import-linter>=2.1",
+]
+
+[project.scripts]
+default-cicd-public = "default_cicd_public.entry:main"
+
+[project.urls]
+Homepage = "https://github.com/example/default-cicd-public"
+Repository = "https://github.com/example/default-cicd-public"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/default_cicd_public"]
+
+[tool.scripts.test]
+src-path = "src"
+pytest-verbosity = "-vv"
+coverage-report-file = "coverage.xml"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = ["local_only: marks tests that should only run locally (not in CI)"]
+addopts = "-ra -q"
+
+[tool.coverage.run]
+source = ["src/default_cicd_public"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 90
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "N",
+    "UP",
+    "B",
+    "A",
+    "C4",
+    "PT",
+    "SIM",
+    "TCH",
+    "RUF",
+]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["default_cicd_public"]
+
+[tool.pyright]
+pythonVersion = "3.10"
+pythonPlatform = "All"
+typeCheckingMode = "strict"
+include = ["src", "tests"]
+reportMissingTypeStubs = false
+
+[tool.bandit]
+skips = ["B101"]
+
+[tool.importlinter]
+root_package = "default_cicd_public"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Domain has no dependencies on outer layers"
+type = "independence"
+modules = ["default_cicd_public.domain"]
+
+[[tool.importlinter.contracts]]
+name = "Application depends only on domain"
+type = "layers"
+layers = ["default_cicd_public.application", "default_cicd_public.domain"]
+
+[[tool.importlinter.contracts]]
+name = "Adapters depend on application and domain"
+type = "layers"
+layers = [
+    "default_cicd_public.adapters",
+    "default_cicd_public.application",
+    "default_cicd_public.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Composition can depend on everything"
+type = "layers"
+layers = [
+    "default_cicd_public.composition",
+    "default_cicd_public.adapters",
+    "default_cicd_public.application",
+    "default_cicd_public.domain",
+]
