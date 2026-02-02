@@ -180,7 +180,7 @@ pdm.lock
 uv.lock
 
 # div
-.devcontainer/
+# .devcontainer/ # needed for github codespaces
 .claude/
 CLAUDE.md
 old_code/
