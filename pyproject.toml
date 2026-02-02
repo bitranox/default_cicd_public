@@ -109,6 +109,14 @@ reportMissingTypeStubs = false
 [tool.bandit]
 skips = ["B101"]
 
+[tool.pip-audit]
+# setuptools 65.5.0 vulnerabilities - transitive dependency via build tools
+ignore-vulns = [
+    "PYSEC-2022-43012",  # Fixed in 65.5.1
+    "PYSEC-2025-49",     # Fixed in 78.1.1
+    "CVE-2024-6345",     # Fixed in 70.0.0
+]
+
 [tool.importlinter]
 root_package = "default_cicd_public"
 include_external_packages = true
