@@ -116,6 +116,7 @@ ignore-vulns = [
     "PYSEC-2025-49",     # Fixed in 78.1.1
     "CVE-2024-6345",     # Fixed in 70.0.0
     "CVE-2026-1703",
+    "CVE-2026-25990",
 ]
 
 [tool.importlinter]
