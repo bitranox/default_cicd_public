@@ -1,6 +1,6 @@
 [project]
 name = "default-cicd-public"
-version = "0.1.0"
+version = "0.1.1"
 description = "CLI tool to distribute CI/CD templates to projects"
 readme = "README.md"
 license = { text = "MIT" }
@@ -26,13 +26,13 @@ dependencies = ["rich-click>=1.9.7"]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",
-    "pytest-cov>=6.0",
-    "ruff>=0.9",
-    "pyright>=1.1",
-    "bandit>=1.8",
-    "pip-audit>=2.8",
-    "import-linter>=2.1",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.15.1",
+    "pyright>=1.1.408",
+    "bandit>=1.9.3",
+    "pip-audit>=2.10.0",
+    "import-linter>=2.10",
 ]
 
 [project.scripts]
