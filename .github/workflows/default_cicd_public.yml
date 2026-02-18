@@ -25,15 +25,10 @@ jobs:
         id: versions
         shell: python
         run: |
-          import json, os, subprocess, sys
-          try:
-              import rtoml
-          except ModuleNotFoundError:
-              subprocess.check_call([sys.executable, "-m", "pip", "install", "rtoml", "-q"])
-              import rtoml
-          from pathlib import Path
+          import json, os, tomllib
 
-          data = rtoml.load(Path("pyproject.toml"))
+          with open("pyproject.toml", "rb") as f:
+              data = tomllib.load(f)
           classifiers = data.get("project", {}).get("classifiers", [])
           prefix = "Programming Language :: Python :: "
           versions = [
@@ -41,6 +36,8 @@ jobs:
               for c in classifiers
               if c.startswith(prefix) and "." in c[len(prefix):]
           ]
+          if not versions:
+              raise SystemExit("No Python X.Y versions found in classifiers")
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
               fh.write(f"python-versions={json.dumps(versions)}\n")
               fh.write(f"python-latest={versions[-1]}\n")
