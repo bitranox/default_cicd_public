@@ -1,6 +1,6 @@
 [project]
 name = "default-cicd-public"
-version = "0.1.1"
+version = "0.1.2"
 description = "CLI tool to distribute CI/CD templates to projects"
 readme = "README.md"
 license = { text = "MIT" }
@@ -36,12 +36,12 @@ os = ["ubuntu-latest", "windows-latest", "macos-latest"]
 [project.optional-dependencies]
 dev = [
     "pytest>=9.0.2",
-    "pytest-cov>=7.0.0",
-    "ruff>=0.15.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.8",
     "pyright>=1.1.408",
-    "bandit>=1.9.3",
+    "bandit>=1.9.4",
     "pip-audit>=2.10.0",
-    "import-linter>=2.10",
+    "import-linter>=2.11",
 ]
 
 [project.scripts]
@@ -119,16 +119,11 @@ reportMissingTypeStubs = false
 skips = ["B101"]
 
 [tool.pip-audit]
-# setuptools 65.5.0 vulnerabilities - transitive dependency via build tools
 ignore-vulns = [
-    "PYSEC-2022-43012",  # Fixed in 65.5.1
-    "PYSEC-2025-49",     # Fixed in 78.1.1
-    "CVE-2024-6345",     # Fixed in 70.0.0
-    "CVE-2026-1703",
-    "CVE-2026-25990",
-    "CVE-2026-26007",
-    "CVE-2026-4539",    # pygments 2.19.2 — ReDoS in AdlLexer, env-only, no fix available
-    "CVE-2026-25645",
+    "CVE-2025-8869",     # pip 24.3.1 — tar symlink extraction bypass, mitigated by Python >=3.12 (PEP 706)
+    "CVE-2026-1703",     # pip 24.3.1 — path traversal in wheel extraction, limited to install dir prefixes
+    "CVE-2026-25990",    # pillow 12.0.0 — OOB write loading crafted PSD images, fix in 12.1.1
+    "PYSEC-2022-42969",  # py 1.11.0 — ReDoS via crafted Subversion info data, no fix available
 ]
 
 [tool.importlinter]
