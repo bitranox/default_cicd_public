@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Cleaned up CVE exclusions: removed resolved setuptools/pygments CVEs, added current pip (CVE-2025-8869) and py (PYSEC-2022-42969) exclusions
+- Cleaned up CVE exclusions: removed resolved setuptools/pygments CVEs, added current pip, pillow, and py exclusions
+- Fixed `tomllib` import error on Python 3.10 in CI system dependency install steps (fallback to `pip._vendor.tomli`)
 
 ## [0.1.1] - 2026-02-13
 
