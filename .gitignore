@@ -179,12 +179,11 @@ poetry.lock
 pdm.lock
 uv.lock
 
-# div
+# div KI related
 # .devcontainer/ # needed for github codespaces
 .claude/
 CLAUDE.md
-old_code/
-prompts.md
+
 
 # RISscraper data output (test artifacts)
 data/
