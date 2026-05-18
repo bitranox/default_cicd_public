@@ -1,5 +1,10 @@
 """The distribute command for copying CI/CD templates to projects."""
 
+# pyright: reportUnknownMemberType=false
+# Click 8.4+ exposes ParamType as a generic without a default parameter, so
+# pyright flags every @click.option(...) call as "partially unknown" even
+# though we only pass concrete subclasses. Scoped to this CLI adapter.
+
 import sys
 from pathlib import Path
 
