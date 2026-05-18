@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-05-18
+
+### Fixed
+
+- Silenced pyright strict-mode false positive `reportUnknownMemberType` triggered by Click 8.4's generic `ParamType`; scoped suppression to the two CLI adapter modules (`adapters/cli/commands/distribute.py`, `adapters/cli/root.py`)
+
+### Changed
+
+- Refreshed pip-audit CVE exclusion list: dropped obsolete pip (CVE-2025-8869, CVE-2026-1703) and pillow (CVE-2026-25990) entries, added paramiko (CVE-2026-44405) and urllib3 (CVE-2026-44431, CVE-2026-44432) entries
+- Cleaned up `.gitignore`
+
 ## [0.1.2] - 2026-03-31
 
 ### Changed
