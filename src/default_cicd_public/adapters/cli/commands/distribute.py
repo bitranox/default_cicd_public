@@ -1,10 +1,5 @@
 """The distribute command for copying CI/CD templates to projects."""
 
-# pyright: reportUnknownMemberType=false
-# Click 8.4+ exposes ParamType as a generic without a default parameter, so
-# pyright flags every @click.option(...) call as "partially unknown" even
-# though we only pass concrete subclasses. Scoped to this CLI adapter.
-
 import sys
 from pathlib import Path
 
@@ -12,6 +7,7 @@ import rich_click as click
 from rich.console import Console
 from rich.table import Table
 
+from default_cicd_public.adapters.cli.typed_click import option
 from default_cicd_public.application.ports import AppServices
 from default_cicd_public.domain.models import CopyResult, CopyStatus
 
@@ -25,25 +21,25 @@ def get_default_search_root() -> Path:
 
 
 @click.command()
-@click.option(
+@option(
     "--source",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
     default=None,
     help="Source .github/ directory to copy from. Auto-detected if not specified.",
 )
-@click.option(
+@option(
     "--search-root",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
     default=None,
     help="Root directory to search from. Defaults to filesystem root (/ or C:\\).",
 )
-@click.option(
+@option(
     "--dry-run",
     is_flag=True,
     default=False,
     help="Show what would be copied without making changes.",
 )
-@click.option(
+@option(
     "-v",
     "--verbose",
     is_flag=True,

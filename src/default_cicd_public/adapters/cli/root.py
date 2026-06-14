@@ -1,18 +1,14 @@
 """Root CLI command group."""
 
-# pyright: reportUnknownMemberType=false
-# Click 8.4+ exposes ParamType as a generic without a default parameter, so
-# pyright flags @click.version_option(...) as "partially unknown" even though
-# we only pass concrete arguments. Scoped to this CLI adapter.
-
 import rich_click as click
 
 from default_cicd_public.__init__conf__ import __app_name__, __version__
 from default_cicd_public.adapters.cli.constants import CLICK_CONTEXT_SETTINGS
+from default_cicd_public.adapters.cli.typed_click import version_option
 
 
 @click.group(context_settings=CLICK_CONTEXT_SETTINGS)
-@click.version_option(__version__, "-V", "--version", prog_name=__app_name__)
+@version_option(__version__, "-V", "--version", prog_name=__app_name__)
 def cli() -> None:
     """Default CI/CD Public - Distribute CI/CD templates to your projects."""
 
