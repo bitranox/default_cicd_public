@@ -32,6 +32,27 @@ The `distribute` command:
 2. Copies all files from this project's `.github/` to each target project's `.github/`
 3. Skips its own project to avoid self-modification
 
+## PyPI publishing (API token or Trusted Publisher)
+
+The release workflow (`default_release_public.yml`) publishes with whichever auth is
+available, chosen automatically by its `Select PyPI auth method` step:
+
+- If the `PYPI_API_TOKEN` secret is set, it publishes with that API token.
+- If the secret is absent, it publishes via an OIDC Trusted Publisher (the job has
+  `id-token: write` and is pinned to the `pypi` environment).
+
+This means a project keeps working on a token and can migrate to a Trusted Publisher
+with no workflow change:
+
+1. On PyPI, add a Trusted Publisher for the project: owner `<github-owner>`, repository
+   `<repo>`, workflow `default_release_public.yml`, environment `pypi`.
+2. Delete the `PYPI_API_TOKEN` secret from the GitHub repository.
+
+The next release then uses OIDC. If you ever see PyPI report that a Trusted Publisher
+is configured but the upload still used an API token, that means the `PYPI_API_TOKEN`
+secret is still present: delete it so the workflow switches to OIDC. To re-enable token
+publishing, just add the secret back.
+
 ## Development
 
 ```bash
