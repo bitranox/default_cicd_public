@@ -192,3 +192,6 @@ data/
 *.db-wal
 *.db-shm
 *.db.lock
+
+# Local, per-developer settings (Claude Code etc.) - never commit
+*.local.json
