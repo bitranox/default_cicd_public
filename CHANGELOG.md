@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`--extra dev`, a PEP 735 `--group dev`, or neither); asking uv for an extra that
   does not exist is a hard error, which would have broken the audit outright in a
   project that declares no dev dependencies.
+- Direct URL requirements (`pkg @ git+https://...`) are filtered out before the
+  audit and named in a `::notice::` rather than dropped silently. pip-audit cannot
+  audit them (they are not on PyPI) but would first try to `git clone` each one to
+  resolve a version. No public project uses one today; this keeps the step
+  identical to `default_cicd_private`, where sibling private repos are depended on
+  exactly that way.
 
 ## [0.1.4] 2026-06-14
 
