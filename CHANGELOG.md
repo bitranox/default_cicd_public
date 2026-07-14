@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The CI `pip-audit` step now audits the project's own resolved dependency tree
+  (`uv pip compile` on `pyproject.toml`, then `pip-audit --no-deps -r`) instead of
+  the whole `--system` environment. Because dev deps are installed into the runner
+  image's interpreter, the scan was reporting CVEs in packages the runner ships but
+  no project declares or distributes (`setuptools`, `pip`, `wheel`) - findings no
+  consumer is exposed to, and which no project can fix. The result is now identical
+  across every OS/python in the matrix and depends only on declared dependencies.
+  The dev-dependency selector is chosen from what each project actually declares
+  (`--extra dev`, a PEP 735 `--group dev`, or neither); asking uv for an extra that
+  does not exist is a hard error, which would have broken the audit outright in a
+  project that declares no dev dependencies.
+
 ## [0.1.4] 2026-06-14
 
 ### Changed
