@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- The release workflow triggers on a `v*` tag push only. It previously also listened
+  for `release: published`, and since `bmk release` pushes the tag and then creates the
+  GitHub release, both events fired about a second apart and produced two concurrent
+  Release runs racing each other to the same PyPI upload. The loser logged
+  `Skipping ... already exists`, which reads like a failed publish even though the
+  package shipped. The tag push is the event to keep: `bmk` runs `git push <remote> <tag>`
+  unconditionally, while `gh release create` sits behind a gh-availability check and runs
+  with `check=False`, so keying the publish off the release event instead would silently
+  publish nothing whenever `gh` is missing or fails. A `concurrency` group keyed on the tag
+  now also stops a `workflow_dispatch` re-run from overlapping the tag-push run.
+  Creating a GitHub release from the UI for an already-pushed tag no longer publishes;
+  the tag push already did at creation time.
 - The CI `pip-audit` step now audits the project's own resolved dependency tree
   (`uv pip compile` on `pyproject.toml`, then `pip-audit --no-deps -r`) instead of
   the whole `--system` environment. Because dev deps are installed into the runner
