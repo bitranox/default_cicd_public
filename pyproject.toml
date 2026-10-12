@@ -18,11 +18,12 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Software Development :: Build Tools",
     "Typing :: Typed",
 ]
 keywords = ["ci", "cd", "github-actions", "templates", "distribution"]
-dependencies = ["rich-click>=1.9.7"]
+dependencies = ["rich-click>=1.9.9"]
 
 # System packages required for CI runners (read by GitHub Actions workflow template)
 # Format: "apt_package_name" for Ubuntu, future: {"apt": "...", "brew": "...", "choco": "..."}
@@ -35,21 +36,21 @@ os = ["ubuntu-latest", "windows-latest", "macos-latest"]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=9.0.3",
+    "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.15.13",
-    "pyright>=1.1.409",
+    "ruff>=0.17.0",
+    "pyright>=1.1.414",
     "bandit>=1.9.4",
-    "pip-audit>=2.10.0",
-    "import-linter>=2.11",
+    "pip-audit>=2.10.1",
+    "import-linter>=2.15",
 ]
 
 [project.scripts]
 default-cicd-public = "default_cicd_public.entry:main"
 
 [project.urls]
-Homepage = "https://github.com/example/default-cicd-public"
-Repository = "https://github.com/example/default-cicd-public"
+Homepage = "https://github.com/bitranox/default_cicd_public"
+Repository = "https://github.com/bitranox/default_cicd_public"
 
 [build-system]
 requires = ["hatchling"]
@@ -182,3 +183,6 @@ patterns = [
   ".cache",
   "result",
 ]
+
+[tool.uv]
+exclude-newer = "1 day"

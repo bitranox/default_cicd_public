@@ -181,7 +181,6 @@ result
 # Optional lockfiles (for alternative managers)
 poetry.lock
 pdm.lock
-uv.lock
 
 # div KI related
 # .devcontainer/ # needed for github codespaces
@@ -201,3 +200,6 @@ data/
 *.local.json
 # bitranox curated memory (local; CLAUDE.local.md @imports it)
 CLAUDE.local.md
+
+# Python virtual environments (managed by bmk)
+.venv*/

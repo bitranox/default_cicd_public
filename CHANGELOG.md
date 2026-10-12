@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Python 3.15 is a supported version: declared in the classifiers, so CI and `make test-all` run it.
+- `uv.lock` is committed, and `[tool.uv] exclude-newer` sets a cooldown that keeps releases younger
+  than it out of the lock. CI installs exactly the locked tree on push and pull request; the nightly
+  scheduled run still resolves afresh to catch upstream breakage early.
+
 ### Changed
+- CI installs the project from its committed `uv.lock` on push and pull request: `uv export
+  --locked` writes the pinned tree with file hashes, uv installs it (verifying every hash), and the
+  project itself goes in with `--no-deps`. `--locked` fails the run when `pyproject.toml` changed
+  without a lock refresh. The nightly scheduled run keeps the unlocked resolve, still inside the
+  project's `[tool.uv]` cooldown, as a canary for upstream breakage. `pip-audit` audits the same
+  tree the install step used. A project without a `uv.lock` keeps the unlocked install.
+- `[project.urls]` points at the real repository, and the README installs from git: the package is
+  not on PyPI.
 - The release workflow triggers on a `v*` tag push only. It previously also listened
   for `release: published`, and since `bmk release` pushes the tag and then creates the
   GitHub release, both events fired about a second apart and produced two concurrent
@@ -37,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolve a version. No public project uses one today; this keeps the step
   identical to `default_cicd_private`, where sibling private repos are depended on
   exactly that way.
+- The install section explains why installing with uv protects against supply-chain attacks and why
+  a plain `pip install` from PyPI does not.
 
 ## [0.1.4] 2026-06-14
 
