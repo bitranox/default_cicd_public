@@ -54,6 +54,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The install section explains why installing with uv protects against supply-chain attacks and why
   a plain `pip install` from PyPI does not.
 
+### Security
+- Every third-party action in the distributed workflows is pinned to a full commit sha, with the
+  ref it replaced kept as a trailing comment (`uses: owner/repo@<40-hex sha> # v7`):
+  `pypa/gh-action-pypi-publish` (`release/v1`), `astral-sh/setup-uv` (`v7`) and
+  `codecov/codecov-action` (`v7`). A tag or branch can be moved by whoever controls the action's
+  repository, and every consumer would run the moved code on its next CI or release run; the
+  publish step in particular holds the PyPI credential. `actions/*` and `github/*` stay on major
+  tags. Dependabot's `github-actions` ecosystem updates the sha and the comment together. A test
+  fails when any non-`actions`/`github` `uses:` under `.github/` is not pinned this way.
+
 ## [0.1.4] 2026-06-14
 
 ### Changed
