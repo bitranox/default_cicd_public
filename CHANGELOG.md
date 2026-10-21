@@ -63,6 +63,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   publish step in particular holds the PyPI credential. `actions/*` and `github/*` stay on major
   tags. Dependabot's `github-actions` ecosystem updates the sha and the comment together. A test
   fails when any non-`actions`/`github` `uses:` under `.github/` is not pinned this way.
+- Dependabot checks the `github-actions` ecosystem monthly instead of weekly and groups every
+  action update into one pull request (`groups: github-actions: patterns: ["*"]`), so the sha
+  pins arrive as one reviewable bump rather than one PR per action. The `pip` ecosystem is
+  unchanged.
 
 ## [0.1.4] 2026-06-14
 
