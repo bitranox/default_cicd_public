@@ -167,3 +167,40 @@ def test_assert_step_follows_the_sh_exec_form_of_a_long_shebang(tmp_path: Path) 
     shebang = f"#!/bin/sh\n'''exec' \"{exe}\" \"$0\" \"$@\"\n' '''"
     result = _run_assert(tmp_path, python_location=_interpreter_root(), pytest_shebang=shebang)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def _framework_layout(tmp_path: Path) -> Path:
+    """setup-python's macOS layout: the toolcache dir's bin is a SYMLINK into the real install.
+
+    actions/python-versions installs the python.org .pkg into /Library/Frameworks/.../Versions/X.Y
+    and links <toolcache>/bin to it (installers/macos-pkg-setup-template.sh), so the interpreter's
+    real path lies outside $pythonLocation. Here the real install is the one running this test.
+    """
+    toolcache = tmp_path / "toolcache" / "arm64"
+    toolcache.mkdir(parents=True)
+    (toolcache / "bin").symlink_to(Path(sys.executable).resolve().parent, target_is_directory=True)
+    return toolcache
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the POSIX branch reads pytest's shebang")
+def test_assert_step_accepts_a_toolcache_bin_symlinked_into_the_real_install(
+    tmp_path: Path,
+) -> None:
+    result = _run_assert(
+        tmp_path,
+        python_location=_framework_layout(tmp_path),
+        pytest_shebang=f"#!{Path(sys.executable).resolve()}",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the POSIX branch reads pytest's shebang")
+def test_assert_step_still_rejects_another_interpreter_behind_a_symlinked_toolcache(
+    tmp_path: Path,
+) -> None:
+    other = tmp_path / "homebrew" / "bin" / "python3.15"
+    result = _run_assert(
+        tmp_path, python_location=_framework_layout(tmp_path), pytest_shebang=f"#!{other}"
+    )
+    assert result.returncode == 1
+    assert "pytest" in result.stdout

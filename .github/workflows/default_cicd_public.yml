@@ -183,15 +183,23 @@ jobs:
           # Every later step runs python, pytest, ruff ... from PATH. If anything puts another
           # installation's bin dir ahead of setup-python's (Homebrew's did, on macOS), the job
           # tests that Python while its name still says the matrix version, and stays green.
-          root = Path(os.environ["pythonLocation"]).resolve()
+          location = Path(os.environ["pythonLocation"])
+          root = location.resolve()
+          # On macOS the toolcache dir's bin is a SYMLINK into the python.org framework install
+          # (actions/python-versions installers/macos-pkg-setup-template.sh), so a resolved
+          # interpreter path lies there, outside $pythonLocation. Accept the install it points at.
+          roots = {root} | {(location / d).resolve().parent for d in ("bin", "Scripts") if (location / d).is_dir()}
 
 
           def under_root(path):
-              try:
-                  path.resolve().relative_to(root)
-                  return True
-              except ValueError:
-                  return False
+              real = path.resolve()
+              for candidate in roots:
+                  try:
+                      real.relative_to(candidate)
+                      return True
+                  except ValueError:
+                      pass
+              return False
 
 
           def script_interpreter(script):

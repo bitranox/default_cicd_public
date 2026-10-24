@@ -70,7 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   installed into it. Only bash's own bin directory goes on PATH now, every install in the test job
   names setup-python's interpreter (`--python sys.executable`), and a new "Assert the matrix
   interpreter" step fails the job on any OS when `python` or `pytest` on PATH belong to another
-  installation. `tests/test_workflow_guards.py` runs that step's script against a pass and a fail
+  installation (on macOS the toolcache's `bin` is a symlink into the python.org framework install,
+  which counts as setup-python's own). `tests/test_workflow_guards.py` runs that step's script against a pass and a fail
   case.
 
 ### Security
