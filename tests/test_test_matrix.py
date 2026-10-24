@@ -16,7 +16,15 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+import pytest
 import yaml
+
+# The setup job runs this script on python-version "3.x" (the newest release), and the script
+# imports tomllib, which exists from Python 3.11. On an older test interpreter the test would
+# exercise a run that never happens in CI.
+pytestmark = pytest.mark.skipif(
+    sys.version_info < (3, 11), reason="the setup job runs on Python 3.x; tomllib needs 3.11+"
+)
 
 WORKFLOW = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "default_cicd_public.yml"
 
