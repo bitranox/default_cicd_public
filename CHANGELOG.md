@@ -53,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exactly that way.
 - The install section explains why installing with uv protects against supply-chain attacks and why
   a plain `pip install` from PyPI does not.
+- The test matrix runs macOS on the newest declared Python only; ubuntu and windows still run every
+  version. GitHub's macOS runners are slow, so a repository listing `macos-latest` now gets one macOS
+  test job instead of one per version. The setup job builds the pairs as a `matrix-include` output,
+  and `python-latest` is the newest version by number rather than the last classifier.
+- `tests/test_test_matrix.py` runs the setup job's own matrix script against sample pyproject files;
+  PyYAML (and its type stubs) is now a declared dev dependency for it.
 
 ### Security
 - Every third-party action in the distributed workflows is pinned to a full commit sha, with the
