@@ -59,6 +59,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `python-latest` is the newest version by number rather than the last classifier.
 - `tests/test_test_matrix.py` runs the setup job's own matrix script against sample pyproject files;
   PyYAML (and its type stubs) is now a declared dev dependency for it.
+- The `test`, `pipx-uv` and `notebooks` jobs time out after 30 minutes. A hung test held its runner
+  for GitHub's six-hour limit, and on macOS that also starved every other repository's macOS jobs.
+- `astral-sh/setup-uv` moves from v7 to v10.3.0 (pinned by sha) in the CI and release workflows,
+  keeping `enable-cache: true` and `prune-cache: false`.
+
+### Fixed
+- macOS test jobs ran on Homebrew's Python instead of the matrix version: the bash-4 step put all of
+  `$(brew --prefix)/bin` on PATH, so Homebrew's `python3` came first and `uv pip install --system`
+  installed into it. Only bash's own bin directory goes on PATH now, every install in the test job
+  names setup-python's interpreter (`--python sys.executable`), and a new "Assert the matrix
+  interpreter" step fails the job on any OS when `python` or `pytest` on PATH belong to another
+  installation. `tests/test_workflow_guards.py` runs that step's script against a pass and a fail
+  case.
 
 ### Security
 - Every third-party action in the distributed workflows is pinned to a full commit sha, with the
