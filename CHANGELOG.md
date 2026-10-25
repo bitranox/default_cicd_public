@@ -61,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PyYAML (and its type stubs) is now a declared dev dependency for it.
 - The `test`, `pipx-uv` and `notebooks` jobs time out after 30 minutes. A hung test held its runner
   for GitHub's six-hour limit, and on macOS that also starved every other repository's macOS jobs.
-- `astral-sh/setup-uv` moves from v7 to v10.3.1 (pinned by sha) in the CI and release workflows,
+- `astral-sh/setup-uv` moves from v7 to v10.3.2 (pinned by sha) in the CI and release workflows,
   keeping `enable-cache: true` and `prune-cache: false`. v10.3.1 stops concurrent jobs from warning
   `Failed to save: Unable to reserve cache` when they save the same cache key.
 
