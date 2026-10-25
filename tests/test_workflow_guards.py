@@ -4,7 +4,7 @@ Each test pins a decision that a later edit could silently undo:
 
 * A hung test once held five macOS runners for 50 minutes until it was cancelled by hand. The
   jobs that run project code therefore carry ``timeout-minutes: 30``.
-* setup-uv is pinned to one reviewed commit (v10.3.0), in both workflows.
+* setup-uv is pinned to one reviewed commit (``SETUP_UV``), in both workflows.
 * On macOS, the bash-4 step used to put ALL of Homebrew's bin directory on PATH, so Homebrew's
   python3 shadowed setup-python's. ``uv pip install --system`` then installed into Homebrew's
   interpreter, and every macOS cell ran pytest on that Python while its job name still said the
@@ -28,7 +28,7 @@ import yaml
 WORKFLOWS = Path(__file__).resolve().parents[1] / ".github" / "workflows"
 CICD = WORKFLOWS / "default_cicd_public.yml"
 RELEASE = WORKFLOWS / "default_release_public.yml"
-SETUP_UV = "astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0"
+SETUP_UV = "astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1"
 ASSERT_STEP = "Assert the matrix interpreter"
 
 
@@ -52,7 +52,7 @@ def test_jobs_that_run_project_code_time_out_after_30_minutes(job: str) -> None:
 
 
 @pytest.mark.parametrize("workflow", [CICD, RELEASE], ids=lambda p: p.name)
-def test_every_setup_uv_ref_is_the_reviewed_v10_3_0_pin(workflow: Path) -> None:
+def test_every_setup_uv_ref_is_the_reviewed_pin(workflow: Path) -> None:
     refs = re.findall(
         r"uses:\s*(astral-sh/setup-uv@.*?)\s*$", workflow.read_text(encoding="utf-8"), re.MULTILINE
     )
