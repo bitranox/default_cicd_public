@@ -56,6 +56,34 @@ The `distribute` command:
 2. Copies all files from this project's `.github/` to each target project's `.github/`
 3. Skips its own project to avoid self-modification
 
+## Test matrix (read from the consumer's pyproject.toml)
+
+The CI `setup` job builds the test matrix from the consumer's `pyproject.toml`:
+
+- Python versions: every `Programming Language :: Python :: X.Y` classifier.
+- Operating systems: `[tool.ci] os` (default `["ubuntu-latest"]`). macOS runs only the newest
+  declared version, because GitHub's macOS runners are slow.
+- Free-threaded builds: `[tool.ci] free-threaded`, a list of `"X.Y"` versions that are also
+  declared as classifiers. Each adds an `X.Yt` cell on every OS except macOS.
+
+```toml
+[project]
+classifiers = [
+  "Programming Language :: Python :: 3.15",
+  "Programming Language :: Python :: Free Threading :: 2 - Beta",
+]
+
+[tool.ci]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+free-threaded = ["3.15"]
+```
+
+`3.15t` cannot go into the classifiers: it is not a trove classifier, and hatchling refuses to
+build a package with an unknown one. The version-less `Free Threading :: <level>` classifier is
+what PyPI shows; the setup job warns when `free-threaded` is set without it. A free-threaded cell
+installs the dev dependencies like any other, so a dependency without a free-threaded build (or a
+source build that refuses one) has to be kept out of the dev install for that interpreter.
+
 ## PyPI publishing (API token or Trusted Publisher)
 
 The release workflow (`default_release_public.yml`) publishes with whichever auth is

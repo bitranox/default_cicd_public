@@ -2,7 +2,8 @@
 
 GitHub's macOS runners are slow, so a repository that lists `macos-latest` in `[tool.ci].os` gets
 one macOS test job (the newest Python from its classifiers) instead of one per version. ubuntu and
-windows keep the whole version list. The matrix is computed by a Python script inside the
+windows keep the whole version list, plus an "X.Yt" cell for each version in `[tool.ci]
+free-threaded`. The matrix is computed by a Python script inside the
 workflow's `setup` job, so these tests run that exact script against a sample pyproject.toml and
 read what it writes to GITHUB_OUTPUT: a copy of the logic would pass while the workflow drifted.
 """
@@ -112,3 +113,128 @@ def test_the_test_job_takes_its_matrix_from_the_setup_include() -> None:
         "include": "${{ fromJSON(needs.setup.outputs.matrix-include) }}",
     }
     assert "matrix-include" in workflow["jobs"]["setup"]["outputs"]
+
+
+FREE_THREADING = "Programming Language :: Python :: Free Threading :: 2 - Beta"
+
+
+def _run_setup_raw(
+    tmp_path: Path, *, versions: list[str], tool_ci: str, extra_classifiers: tuple[str, ...] = ()
+) -> tuple[subprocess.CompletedProcess[str], dict[str, str]]:
+    """Run the setup script; return the finished process and whatever it wrote to GITHUB_OUTPUT."""
+    classifiers = [f"Programming Language :: Python :: {v}" for v in versions] + list(
+        extra_classifiers
+    )
+    quoted = ", ".join(f'"{c}"' for c in classifiers)
+    (tmp_path / "pyproject.toml").write_text(
+        f'[project]\nname = "x"\nclassifiers = [{quoted}]\n\n[tool.ci]\n{tool_ci}\n',
+        encoding="utf-8",
+    )
+    output = tmp_path / "github_output"
+    output.write_text("", encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, "-c", _metadata_script()],
+        cwd=tmp_path,
+        env={**os.environ, "GITHUB_OUTPUT": str(output)},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    lines = output.read_text(encoding="utf-8").splitlines()
+    return proc, dict(line.split("=", 1) for line in lines if line)
+
+
+def test_free_threaded_versions_add_t_cells_beside_the_regular_ones(tmp_path: Path) -> None:
+    proc, outputs = _run_setup_raw(
+        tmp_path,
+        versions=["3.14", "3.15"],
+        tool_ci=f'os = {ALL_OS}\nfree-threaded = ["3.15"]',
+        extra_classifiers=(FREE_THREADING,),
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert _include(outputs) == [
+        ("macos-latest", "3.15"),
+        ("ubuntu-latest", "3.14"),
+        ("ubuntu-latest", "3.15"),
+        ("ubuntu-latest", "3.15t"),
+        ("windows-latest", "3.14"),
+        ("windows-latest", "3.15"),
+        ("windows-latest", "3.15t"),
+    ]
+
+
+def test_the_newest_python_stays_the_regular_build(tmp_path: Path) -> None:
+    _, outputs = _run_setup_raw(
+        tmp_path,
+        versions=["3.15"],
+        tool_ci='os = ["ubuntu-latest"]\nfree-threaded = ["3.15"]',
+        extra_classifiers=(FREE_THREADING,),
+    )
+
+    assert outputs["python-latest"] == "3.15"
+
+
+def test_free_threaded_without_its_classifier_warns(tmp_path: Path) -> None:
+    proc, outputs = _run_setup_raw(
+        tmp_path, versions=["3.15"], tool_ci='os = ["ubuntu-latest"]\nfree-threaded = ["3.15"]'
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert "::warning::" in proc.stdout
+    assert "Free Threading" in proc.stdout
+    assert ("ubuntu-latest", "3.15t") in _include(outputs)
+
+
+def test_free_threaded_with_its_classifier_does_not_warn(tmp_path: Path) -> None:
+    proc, _ = _run_setup_raw(
+        tmp_path,
+        versions=["3.15"],
+        tool_ci='os = ["ubuntu-latest"]\nfree-threaded = ["3.15"]',
+        extra_classifiers=(FREE_THREADING,),
+    )
+
+    assert "::warning::" not in proc.stdout
+
+
+def test_a_free_threaded_version_must_also_be_a_declared_version(tmp_path: Path) -> None:
+    proc, outputs = _run_setup_raw(
+        tmp_path,
+        versions=["3.14"],
+        tool_ci='os = ["ubuntu-latest"]\nfree-threaded = ["3.15"]',
+        extra_classifiers=(FREE_THREADING,),
+    )
+
+    assert proc.returncode != 0
+    assert "3.15" in proc.stdout + proc.stderr
+    assert "free-threaded" in proc.stdout + proc.stderr
+    assert "matrix-include" not in outputs
+
+
+@pytest.mark.parametrize("entry", ['"3.15t"', "3.15", '"3"'])
+def test_a_free_threaded_entry_must_be_an_x_y_string(tmp_path: Path, entry: str) -> None:
+    proc, outputs = _run_setup_raw(
+        tmp_path,
+        versions=["3.15"],
+        tool_ci=f'os = ["ubuntu-latest"]\nfree-threaded = [{entry}]',
+        extra_classifiers=(FREE_THREADING,),
+    )
+
+    assert proc.returncode != 0
+    assert "free-threaded" in proc.stdout + proc.stderr
+    assert "matrix-include" not in outputs
+
+
+def test_without_a_free_threaded_list_no_t_cell_appears(tmp_path: Path) -> None:
+    proc, outputs = _run_setup_raw(
+        tmp_path,
+        versions=["3.15"],
+        tool_ci='os = ["ubuntu-latest"]',
+        extra_classifiers=(FREE_THREADING,),
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert _include(outputs) == [("ubuntu-latest", "3.15")]
+    assert "::warning::" not in proc.stdout

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Free-threaded CI cells: `[tool.ci] free-threaded = ["3.15"]` in a consumer's `pyproject.toml`
+  adds a `3.15t` test cell on every OS except macOS (which keeps only the newest regular version).
+  It is a `[tool.ci]` key and not a classifier because `3.15t` is no trove classifier and hatchling
+  refuses to build with an unknown one. Each entry must be an `"X.Y"` string the classifiers
+  already declare, or the setup job fails; the job warns when the list is set but no
+  `Programming Language :: Python :: Free Threading :: <level>` classifier is.
 - Python 3.15 is a supported version: declared in the classifiers, so CI and `make test-all` run it.
 - `uv.lock` is committed, and `[tool.uv] exclude-newer` sets a cooldown that keeps releases younger
   than it out of the lock. CI installs exactly the locked tree on push and pull request; the nightly
