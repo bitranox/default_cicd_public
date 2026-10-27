@@ -3,7 +3,9 @@
 Each test pins a decision that a later edit could silently undo:
 
 * A hung test once held five macOS runners for 50 minutes until it was cancelled by hand. The
-  jobs that run project code therefore carry ``timeout-minutes: 30``.
+  jobs that run project code therefore carry ``timeout-minutes: 60``: a timeout well under
+  GitHub's six-hour default, and above what a large suite's slowest cell needs - 30 cancelled a
+  Windows cell that had already passed its tests.
 * setup-uv is pinned to one reviewed commit (``SETUP_UV``), in both workflows.
 * On macOS, the bash-4 step used to put ALL of Homebrew's bin directory on PATH, so Homebrew's
   python3 shadowed setup-python's. ``uv pip install --system`` then installed into Homebrew's
@@ -47,8 +49,8 @@ def _code_lines(script: str) -> list[str]:
 
 
 @pytest.mark.parametrize("job", ["test", "pipx-uv", "notebooks"])
-def test_jobs_that_run_project_code_time_out_after_30_minutes(job: str) -> None:
-    assert _jobs()[job].get("timeout-minutes") == 30
+def test_jobs_that_run_project_code_time_out_after_60_minutes(job: str) -> None:
+    assert _jobs()[job].get("timeout-minutes") == 60
 
 
 @pytest.mark.parametrize("workflow", [CICD, RELEASE], ids=lambda p: p.name)

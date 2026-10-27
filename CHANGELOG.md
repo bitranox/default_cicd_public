@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scheduled run still resolves afresh to catch upstream breakage early.
 
 ### Changed
+- The `test`, `pipx-uv` and `notebooks` jobs time out after 60 minutes instead of 30. A large suite's slowest cells
+  (Python 3.11 and 3.13 run it about 1.7 times slower than the rest) reached the 30-minute limit
+  and were cancelled after their tests had already passed, so a green suite read as a failure.
+  60 still ends a hung job hours before GitHub's six-hour default.
 - CI installs the project from its committed `uv.lock` on push and pull request: `uv export
   --locked` writes the pinned tree with file hashes, uv installs it (verifying every hash), and the
   project itself goes in with `--no-deps`. `--locked` fails the run when `pyproject.toml` changed
