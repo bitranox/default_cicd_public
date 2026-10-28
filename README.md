@@ -84,6 +84,23 @@ what PyPI shows; the setup job warns when `free-threaded` is set without it. A f
 installs the dev dependencies like any other, so a dependency without a free-threaded build (or a
 source build that refuses one) has to be kept out of the dev install for that interpreter.
 
+## Parallel tests
+
+The test job runs pytest across processes exactly when bmk's `make test` does. The suite runs in
+parallel only when the project's configured pytest loads both pytest-xdist and pytest-cov, which a
+project gets by listing `pytest-xdist` in its dev extra. The worker count comes from
+`[tool.scripts.test] workers`, bmk's own setting (default `"auto"`, one worker per CPU). A run
+passes `--dist loadgroup`, so tests marked `@pytest.mark.xdist_group("<name>")` share one worker.
+A `-n` or `--dist` in the project's own `addopts` is kept.
+
+```toml
+[tool.scripts.test]
+workers = 1   # a suite that is not safe to run in parallel stays in one process
+```
+
+The `Choose pytest workers` step prints the runner's CPU model and count, because a cell's runtime
+depends on the machine GitHub assigns as much as on the code.
+
 ## PyPI publishing (API token or Trusted Publisher)
 
 The release workflow (`default_release_public.yml`) publishes with whichever auth is

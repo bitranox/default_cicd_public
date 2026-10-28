@@ -20,8 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scheduled run still resolves afresh to catch upstream breakage early.
 
 ### Changed
+- The test job runs pytest across processes exactly when bmk's `make test` does: a new
+  `Choose pytest workers` step passes `-n <workers> --dist loadgroup` when the project's configured
+  pytest loads pytest-xdist and pytest-cov, with the count from `[tool.scripts.test] workers`
+  (`1` keeps the suite in one process; a project's own `-n` or `--dist` is kept). The step also
+  prints the runner's CPU model and count: a cell's runtime turned out to depend on the machine
+  GitHub assigns (lsdsk's cells on Python 3.11-3.13 ran either about 17 or about 28 minutes,
+  whichever version it was, and a Node step in the same job slowed by the same factor).
 - The `test`, `pipx-uv` and `notebooks` jobs time out after 60 minutes instead of 30. A large suite's slowest cells
-  (Python 3.11 and 3.13 run it about 1.7 times slower than the rest) reached the 30-minute limit
+  (on a slower GitHub runner) reached the 30-minute limit
   and were cancelled after their tests had already passed, so a green suite read as a failure.
   60 still ends a hung job hours before GitHub's six-hour default.
 - CI installs the project from its committed `uv.lock` on push and pull request: `uv export
