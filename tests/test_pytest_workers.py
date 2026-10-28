@@ -47,9 +47,30 @@ def _step(name: str) -> dict[str, Any]:
     return next(s for s in _steps() if s.get("name") == name)
 
 
-def _run(tmp_path: Path, pyproject: str) -> tuple[subprocess.CompletedProcess[str], dict[str, str]]:
+# pytest 9.2.0 builds Node.nodeid from a structured id and never reads _nodeid, which is where
+# pytest-xdist 3.8.0 writes an item's group (pytest-xdist issue #1386), so --dist loadgroup spreads
+# every xdist_group over all workers and the run stays green. Each sample project carries a
+# conftest that fixes which of the two behaviours its pytest has, so the step's check runs against
+# the real installed xdist source and the tests hold whichever pytest the dev extra resolved: bmk
+# raises the floor to the newest release, and an unpinned test reads that release's answer.
+_NODEID_IGNORES_RENAME = (
+    'from _pytest.nodes import Node\nNode.nodeid = property(lambda self: "structured-id")\n'
+)
+_NODEID_HONOURS_RENAME = (
+    "from _pytest.nodes import Node\n"
+    "_structured = Node.nodeid\n"
+    "Node.nodeid = property(\n"
+    '    lambda self: self.__dict__.get("_nodeid") or _structured.fget(self)\n'
+    ")\n"
+)
+
+
+def _run(
+    tmp_path: Path, pyproject: str, conftest: str = _NODEID_HONOURS_RENAME
+) -> tuple[subprocess.CompletedProcess[str], dict[str, str]]:
     """Run the step as GitHub's ``shell: python`` does, in a project holding ``pyproject``."""
     (tmp_path / "pyproject.toml").write_text(pyproject, encoding="utf-8")
+    (tmp_path / "conftest.py").write_text(conftest, encoding="utf-8")
     output = tmp_path / "github_output"
     output.write_text("", encoding="utf-8")
     script = tmp_path.parent / f"{tmp_path.name}-step.py"
@@ -127,18 +148,8 @@ def test_a_project_that_blocks_pytest_cov_stays_serial(tmp_path: Path) -> None:
     assert out["args"] == ""
 
 
-# pytest 9.2.0 builds Node.nodeid from a structured id and never reads _nodeid, which is where
-# pytest-xdist 3.8.0 writes an item's group (pytest-xdist issue #1386), so --dist loadgroup spreads
-# every xdist_group over all workers and the run stays green. This conftest gives the template's own
-# pytest that behaviour, so the step's check runs against the real installed xdist source.
-_NODEID_IGNORES_RENAME = (
-    'from _pytest.nodes import Node\nNode.nodeid = property(lambda self: "structured-id")\n'
-)
-
-
 def test_a_pytest_that_drops_xdist_group_marks_stays_serial(tmp_path: Path) -> None:
-    (tmp_path / "conftest.py").write_text(_NODEID_IGNORES_RENAME, encoding="utf-8")
-    result, out = _run(tmp_path, PROJECT)
+    result, out = _run(tmp_path, PROJECT, conftest=_NODEID_IGNORES_RENAME)
     assert result.returncode == 0, result.stdout + result.stderr
     assert out["args"] == ""
     assert "pytest runs serial" in result.stdout
@@ -146,8 +157,7 @@ def test_a_pytest_that_drops_xdist_group_marks_stays_serial(tmp_path: Path) -> N
 
 
 def test_a_pytest_that_drops_xdist_group_marks_overrides_a_projects_own_n(tmp_path: Path) -> None:
-    (tmp_path / "conftest.py").write_text(_NODEID_IGNORES_RENAME, encoding="utf-8")
-    result, out = _run(tmp_path, _with_addopts("-n 4"))
+    result, out = _run(tmp_path, _with_addopts("-n 4"), conftest=_NODEID_IGNORES_RENAME)
     assert result.returncode == 0, result.stdout + result.stderr
     assert out["args"] == "-n 0"
 
@@ -183,3 +193,13 @@ def test_the_step_runs_on_every_os_after_the_dev_deps_and_before_pytest() -> Non
 def test_pytest_receives_the_chosen_arguments() -> None:
     run = str(_step("Run pytest (tests + coverage)")["run"])
     assert "${{ steps.workers.outputs.args }}" in run
+
+
+def test_pytest_is_told_where_its_coverage_data_goes() -> None:
+    # pytest-cov fixes its data file before any conftest runs, and pytest-xdist workers start
+    # later and inherit the environment. A conftest that sets COVERAGE_FILE therefore sends the
+    # workers' data somewhere the controller never combines from: every test passes and the total
+    # reads 0% wherever the conftest's path differs from the configured one (Windows, where
+    # tempfile.gettempdir() is not /tmp). Setting it before pytest starts makes both agree.
+    env = _step("Run pytest (tests + coverage)").get("env", {})
+    assert env.get("COVERAGE_FILE") == "${{ runner.temp }}/.coverage"
