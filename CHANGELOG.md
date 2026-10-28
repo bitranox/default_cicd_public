@@ -23,7 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The test job runs pytest across processes exactly when bmk's `make test` does: a new
   `Choose pytest workers` step passes `-n <workers> --dist loadgroup` when the project's configured
   pytest loads pytest-xdist and pytest-cov, with the count from `[tool.scripts.test] workers`
-  (`1` keeps the suite in one process; a project's own `-n` or `--dist` is kept). The step also
+  (`1` keeps the suite in one process; a project's own `-n` or `--dist` is kept). It stays serial
+  when the installed pytest drops pytest-xdist's `xdist_group` marks, as pytest 9.2.0 does with
+  pytest-xdist 3.8.0 (pytest-xdist issue #1386), the same rule as bmk 3.31.0. The step also
   prints the runner's CPU model and count: a cell's runtime turned out to depend on the machine
   GitHub assigns (lsdsk's cells on Python 3.11-3.13 ran either about 17 or about 28 minutes,
   whichever version it was, and a Node step in the same job slowed by the same factor).

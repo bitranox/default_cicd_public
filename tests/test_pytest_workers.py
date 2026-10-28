@@ -127,6 +127,31 @@ def test_a_project_that_blocks_pytest_cov_stays_serial(tmp_path: Path) -> None:
     assert out["args"] == ""
 
 
+# pytest 9.2.0 builds Node.nodeid from a structured id and never reads _nodeid, which is where
+# pytest-xdist 3.8.0 writes an item's group (pytest-xdist issue #1386), so --dist loadgroup spreads
+# every xdist_group over all workers and the run stays green. This conftest gives the template's own
+# pytest that behaviour, so the step's check runs against the real installed xdist source.
+_NODEID_IGNORES_RENAME = (
+    'from _pytest.nodes import Node\nNode.nodeid = property(lambda self: "structured-id")\n'
+)
+
+
+def test_a_pytest_that_drops_xdist_group_marks_stays_serial(tmp_path: Path) -> None:
+    (tmp_path / "conftest.py").write_text(_NODEID_IGNORES_RENAME, encoding="utf-8")
+    result, out = _run(tmp_path, PROJECT)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert out["args"] == ""
+    assert "pytest runs serial" in result.stdout
+    assert "#1386" in result.stdout
+
+
+def test_a_pytest_that_drops_xdist_group_marks_overrides_a_projects_own_n(tmp_path: Path) -> None:
+    (tmp_path / "conftest.py").write_text(_NODEID_IGNORES_RENAME, encoding="utf-8")
+    result, out = _run(tmp_path, _with_addopts("-n 4"))
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert out["args"] == "-n 0"
+
+
 @pytest.mark.parametrize("bad", ['"many"', "0", "true", "-2"])
 def test_a_worker_setting_that_is_no_count_fails_the_step(tmp_path: Path, bad: str) -> None:
     result, out = _run(tmp_path, f"{PROJECT}\n[tool.scripts.test]\nworkers = {bad}\n")

@@ -98,6 +98,11 @@ A `-n` or `--dist` in the project's own `addopts` is kept.
 workers = 1   # a suite that is not safe to run in parallel stays in one process
 ```
 
+The suite also stays in one process when the installed pytest drops pytest-xdist's `xdist_group`
+marks, which pytest 9.2.0 does with pytest-xdist 3.8.0 (pytest-xdist issue #1386): grouped tests
+would otherwise run on every worker while the run stays green. The step asks the installed code,
+not its version, so a fixed pytest-xdist release turns parallel runs back on by itself.
+
 The `Choose pytest workers` step prints the runner's CPU model and count, because a cell's runtime
 depends on the machine GitHub assigns as much as on the code.
 
