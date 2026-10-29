@@ -188,4 +188,5 @@ patterns = [
 ]
 
 [tool.uv]
-exclude-newer = "1 day"
+exclude-newer = "7 days"
+exclude-newer-package = {pytest = "2026-10-27T21:30:21Z", ruff = "2026-10-27T00:34:06Z"}
