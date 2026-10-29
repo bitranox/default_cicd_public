@@ -14,8 +14,9 @@ CLICK_CONTEXT_SETTINGS: dict[str, object] = {
 }
 
 # Rich-click styling
-click.rich_click.USE_RICH_MARKUP = True
-click.rich_click.USE_MARKDOWN = False
+# TEXT_MARKUP replaces the USE_RICH_MARKUP / USE_MARKDOWN pair, which rich-click >= 1.9 resolves to
+# the same "rich" value but warns about on every help render.
+click.rich_click.TEXT_MARKUP = "rich"
 click.rich_click.SHOW_ARGUMENTS = True
 click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 click.rich_click.STYLE_ERRORS_SUGGESTION = "dim"

@@ -99,6 +99,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   installation (on macOS the toolcache's `bin` is a symlink into the python.org framework install,
   which counts as setup-python's own). `tests/test_workflow_guards.py` runs that step's script against a pass and a fail
   case.
+- The CLI's help printed a rich-click PendingDeprecationWarning (`use_markdown=` will be
+  deprecated) on every render. The styling now sets `TEXT_MARKUP = "rich"`, the value rich-click
+  already resolved the old `USE_RICH_MARKUP` / `USE_MARKDOWN` pair to; the help text is unchanged.
 
 ### Security
 - Every third-party action in the distributed workflows is pinned to a full commit sha, with the

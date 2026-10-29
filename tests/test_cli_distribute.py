@@ -1,5 +1,6 @@
 """Tests for the distribute CLI command."""
 
+import warnings
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -63,6 +64,17 @@ class TestDistributeCommand:
         assert "--dry-run" in result.output
         assert "--verbose" in result.output
         assert "--search-root" in result.output
+
+    def test_help_renders_without_a_rich_click_deprecation_warning(
+        self, cli_runner: CliRunner
+    ) -> None:
+        """The rich-click styling selects text_markup, not the use_markdown/use_rich_markup flags it deprecates."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", PendingDeprecationWarning)
+            result = cli_runner.invoke(cli, ["distribute", "--help"])
+
+        assert result.exception is None, repr(result.exception)
+        assert result.exit_code == 0
 
     def test_dry_run_flag(
         self,
