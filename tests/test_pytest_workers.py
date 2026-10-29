@@ -84,7 +84,7 @@ def _run(
         capture_output=True,
         text=True,
         encoding="utf-8",
-        env={**env, "GITHUB_OUTPUT": str(output)},
+        env={**env, "GITHUB_OUTPUT": str(output), "PYTEST_CI_EXCLUDES": _CI_EXCLUDES},
         check=False,
     )
     lines = output.read_text(encoding="utf-8").splitlines()
@@ -92,6 +92,8 @@ def _run(
 
 
 PROJECT = '[project]\nname = "x"\nversion = "0"\n'
+# What the job excludes, as extract-metadata builds it for a project with no pytest-exclude-markers.
+_CI_EXCLUDES = "not local_only"
 
 
 def _with_addopts(addopts: str, extra: str = "") -> str:
@@ -203,3 +205,78 @@ def test_pytest_is_told_where_its_coverage_data_goes() -> None:
     # tempfile.gettempdir() is not /tmp). Setting it before pytest starts makes both agree.
     env = _step("Run pytest (tests + coverage)").get("env", {})
     assert env.get("COVERAGE_FILE") == "${{ runner.temp }}/.coverage"
+
+
+# pytest's -m is an argparse "store" option: the last one wins, so the -m this job passes replaces
+# an -m the project keeps in [tool.pytest.ini_options] addopts, and tests the project excludes from
+# its own runs ran in CI anyway (a project with addopts -m "not slow" ran its slow suite). The step
+# asks the project's pytest which -m its configuration ends up with - pytest has merged addopts and
+# PYTEST_ADDOPTS by then - and combines it with what CI excludes, as bmk 3.32.0's make test does.
+def test_a_project_without_its_own_marker_expression_gets_the_ci_exclusion(tmp_path: Path) -> None:
+    result, out = _run(tmp_path, PROJECT)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert out["markexpr"] == _CI_EXCLUDES
+
+
+def test_a_projects_own_marker_expression_is_combined_with_the_ci_exclusion(tmp_path: Path) -> None:
+    result, out = _run(tmp_path, _with_addopts("-m 'not slow'"))
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert out["markexpr"] == f"(not slow) and ({_CI_EXCLUDES})"
+
+
+def test_a_test_the_project_excludes_stays_excluded_when_pytest_runs_with_the_chosen_expression(
+    tmp_path: Path,
+) -> None:
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_sample.py").write_text(
+        "import pytest\n\n"
+        "def test_fast():\n    pass\n\n"
+        "@pytest.mark.slow\ndef test_slow():\n    raise AssertionError('a slow test ran')\n",
+        encoding="utf-8",
+    )
+    pyproject = _with_addopts("-m 'not slow' -p no:cacheprovider", 'markers = ["slow: excluded"]\n')
+    result, out = _run(tmp_path, pyproject)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    def pytest_with(markexpr: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "-n",
+                "0",
+                "-p",
+                "no:randomly",
+                "-m",
+                markexpr,
+                "tests",
+            ],
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+        )
+
+    chosen = pytest_with(out["markexpr"])
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    # The control: the bare exclusion, which the job passed before, runs the project's slow test.
+    assert pytest_with(_CI_EXCLUDES).returncode == 1
+
+
+def test_pytest_receives_the_chosen_marker_expression_through_the_environment() -> None:
+    # Through the environment rather than an inline ${{ }} expression, so a quote in a project's
+    # own expression cannot end the shell word early.
+    step = _step("Run pytest (tests + coverage)")
+    assert step.get("env", {}).get("PYTEST_MARKEXPR") == "${{ steps.workers.outputs.markexpr }}"
+    assert '-m "$PYTEST_MARKEXPR"' in str(step["run"])
+    # $PYTEST_MARKEXPR is the environment variable only in bash; PowerShell, the Windows default,
+    # reads it as an unset PowerShell variable and passes an empty -m.
+    assert step.get("shell") == "bash"
+
+
+def test_the_workers_step_is_told_what_ci_excludes() -> None:
+    env = _step(WORKERS_STEP).get("env", {})
+    assert env.get("PYTEST_CI_EXCLUDES") == "${{ env.PYTEST_MARKER_EXPR }}"

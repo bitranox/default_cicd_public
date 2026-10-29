@@ -85,6 +85,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Failed to save: Unable to reserve cache` when they save the same cache key.
 
 ### Fixed
+- A project's own pytest `-m` was dropped in CI. pytest's `-m` is an argparse store option, so the
+  last one wins, and the job's `-m` replaced an `-m` the project keeps in
+  `[tool.pytest.ini_options] addopts`: tests a project leaves out of its own runs (`-m "not slow"`)
+  ran in CI anyway. The `Choose pytest workers` step now asks the project's pytest which `-m` its
+  configuration ends up with and passes `-m "(<project expression>) and (<CI exclusions>)"`, or
+  the CI exclusions alone when the project has none, the same rule as bmk 3.32.0's `make test`.
 - macOS test jobs ran on Homebrew's Python instead of the matrix version: the bash-4 step put all of
   `$(brew --prefix)/bin` on PATH, so Homebrew's `python3` came first and `uv pip install --system`
   installed into it. Only bash's own bin directory goes on PATH now, every install in the test job
