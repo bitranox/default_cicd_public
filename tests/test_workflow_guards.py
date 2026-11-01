@@ -30,7 +30,7 @@ import yaml
 WORKFLOWS = Path(__file__).resolve().parents[1] / ".github" / "workflows"
 CICD = WORKFLOWS / "default_cicd_public.yml"
 RELEASE = WORKFLOWS / "default_release_public.yml"
-SETUP_UV = "astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2"
+SETUP_UV = "astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3"
 ASSERT_STEP = "Assert the matrix interpreter"
 
 
